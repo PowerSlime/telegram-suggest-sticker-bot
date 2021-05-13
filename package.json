@@ -1,0 +1,36 @@
+{
+  "name": "telegram-stickers-bot",
+  "version": "0.0.0",
+  "description": "Telegram bot for suggest stickers",
+  "main": "./lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:commonjs": "rimraf lib && tsc --target es5 --outDir lib --module commonjs --declaration",
+    "build:es": "rimraf es && tsc --target es6 --outDir es --module es6",
+    "build": "npm run build:commonjs && npm run build:es",
+    "dev": "ts-node src/",
+    "prepublishOnly": "npm run build"
+  },
+  "author": "PowerSlime",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^15.0.3",
+    "@types/uuid": "^8.3.0",
+    "rimraf": "^3.0.2",
+    "ts-node": "^9.1.1",
+    "typegram": "^3.3.1",
+    "typescript": "^4.2.4"
+  },
+  "files": [
+    "es",
+    "lib"
+  ],
+  "types": "./lib/index.d.ts",
+  "jsnext:main": "./es/index.js",
+  "module": "./es/index.js",
+  "dependencies": {
+    "dotenv": "^9.0.2",
+    "telegraf": "^4.3.0",
+    "uuid": "^8.3.2"
+  }
+}
