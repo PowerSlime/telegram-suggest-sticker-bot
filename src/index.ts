@@ -87,16 +87,18 @@ bot.on('inline_query', async (ctx) => {
     return ctx.answerInlineQuery(result);
 });
 
-console.log('Bot is started.');
-
 (async () => {
     if (process.env.NODE_ENV === 'development') {
+        console.log('Bot is started.');
         bot.launch();
     } else {
+        const port = parseInt(process.env.PORT || "5000");
+
+        console.log(`Bot is started in webhook mode on port ${port}.`);
         bot.launch({
             webhook: {
                 domain: process.env.TELEGRAM_WEBHOOK_URL,
-                port: parseInt(process.env.PORT || "5000"),
+                port: port,
             }
         })
     }
