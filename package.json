@@ -10,7 +10,7 @@
     "build": "npm run build:commonjs && npm run build:es",
     "migrate:start": "knex migrate:latest",
     "dev": "cross-env NODE_ENV=development npm run migrate:start && cross-env NODE_ENV=development ts-node src/",
-    "start": "cross-env NODE_ENV=production npm run migrate:start && cross-env NODE_ENV=development ts-node src/",
+    "start": "cross-env NODE_ENV=production npm run migrate:start && cross-env NODE_ENV=production ts-node src/",
     "prepublishOnly": "npm run build"
   },
   "author": "PowerSlime",
