@@ -91,3 +91,5 @@ sw.*
 
 # Mac OSX
 .DS_Store
+
+dev.sqlite3
