@@ -8,6 +8,10 @@
     "dev": "cross-env NODE_ENV=development npm run migrate:start && cross-env NODE_ENV=development ts-node src/",
     "start": "cross-env NODE_ENV=production npm run migrate:start && cross-env NODE_ENV=production ts-node src/"
   },
+  "engines": {
+    "node": "14.x",
+    "npm": "7.x"
+  },
   "author": "PowerSlime",
   "license": "MIT",
   "devDependencies": {
