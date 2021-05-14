@@ -67,7 +67,8 @@ class User {
             .table('words')
             .distinct('word')
             .join('stickers', 'stickers.word_id', 'words.id')
-            .where('user_id', this.user.id);
+            .where('user_id', this.user.id)
+            .orderBy('word', 'asc');
 
         return words.map(w => w.word);
     }
