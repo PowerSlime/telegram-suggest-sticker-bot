@@ -2,7 +2,7 @@ import {Telegraf, Scenes, session} from "telegraf";
 import {InlineQueryResultCachedSticker} from "typegram";
 import addWizard, {ADD_WIZARD_ID} from "./scenes/add";
 import db from "./db";
-import { v4 as uuid } from 'uuid';
+import {v4 as uuid} from 'uuid';
 import removeWizard, {REMOVE_WIZARD_ID} from "./scenes/remove";
 
 require("dotenv").config();
@@ -88,7 +88,19 @@ bot.on('inline_query', async (ctx) => {
 });
 
 console.log('Bot is started.');
-bot.launch();
+
+(async () => {
+    if (process.env.NODE_ENV === 'development') {
+        bot.launch();
+    } else {
+        bot.launch({
+            webhook: {
+                domain: process.env.TELEGRAM_WEBHOOK_URL,
+                port: parseInt(process.env.PORT || "5000"),
+            }
+        })
+    }
+})();
 
 // Enable graceful stop
 process.once('SIGINT', () => bot.stop('SIGINT'))
