@@ -12,6 +12,7 @@
     "esModuleInterop": true,
     "noImplicitAny": true
   },
+  "include": ["**/*"],
   "files": [
     "src/index.ts"
   ]

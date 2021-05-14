@@ -1,70 +1,132 @@
+import knex from "./knex";
+import {DbUser} from "./models/user";
+import {DbWord} from "./models/word";
+
 type StickerId = string;
 type StickerFileId = string;
-type UserId = string;
+type UserId = number;
 type Word = string;
 
 class User {
-    private suggestions: Record<Word, Record<StickerId, StickerFileId>> = {};
+    constructor(private readonly user: DbUser) {};
 
-    addSticker(word: Word, stickerId: StickerId, fileId: StickerFileId) {
-        this.suggestions[word] = { [stickerId]: fileId, ...this.suggestions[word] }
+    private async getOrCreateWordId(word: Word): Promise<DbWord['id']> {
+        const _word = await knex
+            .table('words')
+            .select('id')
+            .where('word', word)
+            .first();
+
+        if (!_word) {
+            const queryBuilder = await knex
+                .table('words')
+                .insert({ user_id: this.user.id, word })
+
+            return queryBuilder[0];
+        }
+
+        return _word.id;
     }
 
-    removeSticker(word: Word, stickerId: StickerId) {
-        const result = this.suggestions[word] || {};
-        delete result[stickerId];
+    private async getSticker(wordId: DbWord['id'], stickerId: StickerId) {
+        return knex
+            .table('stickers')
+            .select('sticker_id')
+            .where('word_id', wordId)
+            .andWhere('sticker_id', stickerId)
+            .first();
+    }
 
-        const stickersCount = Object.keys(result).length;
-        if (stickersCount === 0) {
-            delete this.suggestions[word];
-        } else {
-            this.suggestions[word] = result;
+    async addSticker(word: Word, stickerId: StickerId, fileId: StickerFileId) {
+        const wordId = await this.getOrCreateWordId(word);
+        const sticker = await this.getSticker(wordId, stickerId);
+
+        if (!sticker) {
+            await knex
+                .table('stickers')
+                .insert({
+                    word_id: wordId,
+                    sticker_id: stickerId,
+                    sticker_file_id: fileId
+                });
         }
     }
 
-    getWords(): Array<Word> {
-        return Object.keys(this.suggestions);
+    async removeSticker(word: Word, stickerId: StickerId) {
+        await knex
+            .table('stickers')
+            .delete()
+            .whereIn('word_id', function () {
+                this.table('words').select('id').where('word', word)
+            })
+            .andWhere('sticker_id', stickerId);
     }
 
-    getSuggestions(word: Word): Array<StickerFileId> {
-        return Object.values(this.suggestions[word] || {});
+    async getWords(): Promise<Array<Word>> {
+        const words = await knex
+            .table('words')
+            .distinct('word')
+            .join('stickers', 'stickers.word_id', 'words.id')
+            .where('user_id', this.user.id);
+
+        return words.map(w => w.word);
     }
 
-    cleanSuggestions() {
-        this.suggestions = {};
+    async getSuggestions(word: Word): Promise<Array<StickerFileId>> {
+        const stickers = await knex
+            .table('stickers')
+            .select('sticker_file_id')
+            .innerJoin('words', 'words.id', 'stickers.word_id')
+            .where('user_id', this.user.id)
+            .andWhere('words.word', word)
+            .orderBy('created_at', 'desc')
+            .limit(50);
+
+        return stickers.map(s => s.sticker_file_id);
     }
 }
 
 class DB {
-    private db: Record<UserId, User> = {};
+    async getOrCreateDbUser(userId: UserId): Promise<DbUser> {
+        const user = await knex
+            .table('users')
+            .select('*')
+            .where({
+                id: userId,
+            })
+            .first();
 
-    getUser(userId: UserId): User {
-        if (userId in this.db) {
-            return this.db[userId]
-        } else {
-            const user = new User();
-            this.db[userId] = user;
-            return user;
+        if (!user) {
+            const createdUsers = await knex.table('users').insert({ id: userId });
+            const createdUserId = createdUsers[0];
+            return { id: createdUserId };
         }
+
+        return user;
     }
 
-    addSticker(userId: UserId, word: Word, stickerId: StickerId, fileId: StickerFileId) {
-        const user = this.getUser(userId);
-        user.addSticker(word, stickerId, fileId);
+    async getUser(userId: UserId): Promise<User> {
+        const user = await this.getOrCreateDbUser(userId);
+        return new User(user);
     }
 
-    removeSticker(userId: UserId, word: Word, stickerId: StickerId) {
-        const user = this.getUser(userId);
-        user.removeSticker(word, stickerId);
+    async addSticker(userId: UserId, word: Word, stickerId: StickerId, fileId: StickerFileId) {
+        const user = await this.getUser(userId);
+        await user.addSticker(word, stickerId, fileId);
     }
 
-    getWords(userId: UserId): Array<Word> {
-        const user = this.getUser(userId);
+    async removeSticker(userId: UserId, word: Word, stickerId: StickerId): Promise<void> {
+        const user = await this.getUser(userId);
+        await user.removeSticker(word, stickerId);
+    }
+
+    async getWords(userId: UserId): Promise<Array<Word>> {
+        const user = await this.getUser(userId);
         return user.getWords();
     }
 
-    getSuggestions(userId: UserId, word: Word): Array<StickerFileId> {
-        const user = this.getUser(userId);
+    async getSuggestions(userId: UserId, word: Word): Promise<Array<StickerFileId>> {
+        const user = await this.getUser(userId);
         return user.getSuggestions(word);
     }
 }

@@ -45,12 +45,12 @@ bot.command('remove', (ctx) => {
     ctx.scene.enter(REMOVE_WIZARD_ID);
 });
 
-bot.hears(/\/list(.*)/, (ctx) => {
-    const userId = `${ctx.from.id}`;
+bot.hears(/\/list(.*)/, async (ctx) => {
+    const userId = ctx.from.id;
     const word = ctx.match[1].trim();
 
     if (!word) {
-        const words = db.getWords(userId);
+        const words = await db.getWords(userId);
         if (words.length > 0) {
             const text = words.map(word => `- ${word}`).join('\n');
             return ctx.reply(`Available suggestions: \n${text}`);
@@ -59,7 +59,7 @@ bot.hears(/\/list(.*)/, (ctx) => {
         }
     }
 
-    const stickers = db.getSuggestions(userId, word);
+    const stickers = await db.getSuggestions(userId, word);
     if (stickers.length > 0) {
         stickers.forEach((stickerId) => {
             ctx.replyWithSticker(stickerId);
@@ -73,12 +73,12 @@ bot.on('message', (ctx) => {
     ctx.reply('Unknown command, I guess /help will help you');
 });
 
-bot.on('inline_query', (ctx) => {
-    const userId = `${ctx.from.id}`;
+bot.on('inline_query', async (ctx) => {
+    const userId = ctx.from.id;
     const word = ctx.inlineQuery.query;
-    const stickers = db.getSuggestions(userId, word);
+    const stickers = await db.getSuggestions(userId, word);
 
-    const result: Array<InlineQueryResultCachedSticker> = stickers.slice(0, 50).map((stickerId) => ({
+    const result: Array<InlineQueryResultCachedSticker> = stickers.map((stickerId) => ({
         type: "sticker",
         id: uuid(),
         sticker_file_id: stickerId

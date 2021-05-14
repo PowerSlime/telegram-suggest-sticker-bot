@@ -8,7 +8,9 @@
     "build:commonjs": "rimraf lib && tsc --target es5 --outDir lib --module commonjs --declaration",
     "build:es": "rimraf es && tsc --target es6 --outDir es --module es6",
     "build": "npm run build:commonjs && npm run build:es",
-    "dev": "ts-node src/",
+    "migrate:start": "knex migrate:latest",
+    "dev": "cross-env NODE_ENV=development npm run migrate:start && cross-env NODE_ENV=development ts-node src/",
+    "start": "cross-env NODE_ENV=production npm run migrate:start && cross-env NODE_ENV=development ts-node src/",
     "prepublishOnly": "npm run build"
   },
   "author": "PowerSlime",
@@ -29,7 +31,11 @@
   "jsnext:main": "./es/index.js",
   "module": "./es/index.js",
   "dependencies": {
+    "cross-env": "^7.0.3",
     "dotenv": "^9.0.2",
+    "knex": "^0.95.5",
+    "pg": "^8.6.0",
+    "sqlite3": "^5.0.2",
     "telegraf": "^4.3.0",
     "uuid": "^8.3.2"
   }

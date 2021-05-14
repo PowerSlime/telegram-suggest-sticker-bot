@@ -29,17 +29,17 @@ stickerAddStep.command('finish', ctx => {
     ctx.reply('Done. You can type /list command to see the updates');
     ctx.scene.leave();
 });
-stickerAddStep.on('message', ctx => {
+stickerAddStep.on('message', async ctx => {
     // @ts-ignore
     const fileId = ctx.message.sticker?.file_id;
     // @ts-ignore
     const stickerId = ctx.message.sticker?.file_unique_id;
 
     if (stickerId) {
-        const userId = `${ctx.message.from.id}`;
+        const userId = ctx.message.from.id;
 
         const word = ctx.scene.session.word;
-        db.addSticker(userId, word, stickerId, fileId);
+        await db.addSticker(userId, word, stickerId, fileId);
     }
 });
 
